@@ -1,7 +1,7 @@
 const tf = require('@tensorflow/tfjs');
 require('@tensorflow/tfjs-node');
 
-//var csv = require("fast-csv");
+// var csv = require("fast-csv");
 var xs = [];
 var ys = [];
 /*
@@ -17,7 +17,8 @@ function readCSV() {
     return new Promise(function(resolve, reject) {
         csv
         .fromPath(file_name) 
-        .on("data", function(str){    
+        .on("data", function(str){ 
+            console.log(str);
         })
         .on("end", function(){
         
@@ -48,27 +49,29 @@ async function prepareData() {
         
     });
     */
-   xs = [[10,20,30],[20,30,40], ,[30,40,50]];
+   xs = [[10,20,30],[20,30,40],[30,40,50]];
    ys = [40,50,60];
     
 }
 
 const model = tf.sequential();
 
-model.add(tf.layers.xxx({
-    units: xxx,
-    inputShape: [xxx],
-    returnSequences: xxx
+// input of prediction
+model.add(tf.layers.lstm({
+    units: 200,
+    inputShape: [3, 1],
+    returnSequences: false
 }));
 
-model.add(tf.layers.xxx({
-    units: xxx,
+// output of prediction
+model.add(tf.layers.dense({
+    units: 1, // จำนวน output 
     kernelInitializer: 'VarianceScaling',
-    activation: 'xxx'
+    activation: 'relu'
 }));
 
-const LEARNING_RATE = xxx;
-const optimizer = tf.train.xxx(LEARNING_RATE);
+const LEARNING_RATE = 0.001;
+const optimizer = tf.train.adam(LEARNING_RATE);
 
 model.compile({
     optimizer: optimizer,
@@ -82,25 +85,33 @@ async function main(){
             trainXS,
             trainYS,
             {
-                batchSize: xxx,
-                epochs: xxx,
-                shuffle:xxx,
-                validationSplit: xxx
+                batchSize: 1, // element in array 
+                epochs: 1000 , // number of round to train 
+                shuffle: false,
+                validationSplit: 0.2
             });
     }
     await prepareData();
-    
+    trainXS = tf.tensor2d(xs);
+    trainXS = tf.reshape(trainXS,[-1, 3, 1])
+    trainYS = tf.tensor1d(ys);
+    trainYS = tf.reshape(trainYS, [-1, 1])
     
 	await trainModel();
-    const saveResult = await model.save('file://xxx');
+    const saveResult = await model.save('file://model/');
     
     const load = async () => {
-        const model = await tf.loadModel('file://xxx');
+        const model = await tf.loadModel('file://model/model.json');
       };
       
-    load();
 
-    const r = model.predict(xxx);
+    await load();
+
+    let lx = [[10,20,30]];
+    let xxx = tf.tensor2d(lx);
+    xxx  = tf.reshape(xxx, [1,3,1]);
+
+    const r = await model.predict(xxx);
     let result = r.dataSync()[0];
     console.log(result);
 }
